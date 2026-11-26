@@ -124,3 +124,13 @@ test('flight puts the elytra on before checking it', async () => {
   assert.strictEqual(slots[6].name, 'elytra')
   assert.deepStrictEqual(flags, [true, false])
 })
+
+test('!bed redoes the bed stage after setup is done', async () => {
+  const { journey, state, commands } = setup()
+  state.data.setup = 'done'
+  journey.command('bed')
+  assert.strictEqual(state.data.setup, 'bed')
+  await journey.tick()
+  assert.strictEqual(state.data.setup, 'done')
+  assert.ok(commands.includes('/sethome base'))
+})

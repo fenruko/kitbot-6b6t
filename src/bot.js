@@ -45,7 +45,7 @@ const delivery = createDelivery({
 })
 
 const journey = createJourney({ actions: createActions(connection, log, createSurvival(connection, log)), state, config, tell, log })
-const SETUP_COMMANDS = new Set(['accept', 'go', 'retry', 'skip', 'setup', 'stage'])
+const SETUP_COMMANDS = new Set(['accept', 'go', 'retry', 'skip', 'setup', 'stage', 'bed'])
 connection.on('death', () => journey.died())
 
 function respond (request, isOwner) {

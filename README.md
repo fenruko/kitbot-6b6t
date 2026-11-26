@@ -32,7 +32,7 @@ This reduces the risk but cannot remove it, so do not give it gear you cannot lo
 Then fill chests within about 3 blocks of the respawn spot with
 **already packed shulkers**, one per kit.
 
-Setup commands: `!stage` `!accept` `!go` `!retry` `!skip` (finish a stage by hand) `!setup` (start over).
+Setup commands: `!stage` `!accept` `!go` `!retry` `!skip` (finish a stage by hand) `!bed` (redo just the bed and `/sethome`, even after setup is done) `!setup` (start over).
 A bot that is already set up: type `!skip` in the host console until it says `done`.
 
 Suggested player kit: armour, sword, food, totems, obsidian, flint and steel.

@@ -131,6 +131,8 @@ function createJourney ({ actions, state, config, tell, log }) {
           move(STAGES[STAGES.indexOf(stage()) + 1])
           return 'now at ' + stage()
         }
+        // Redo only the bed and /sethome, e.g. after skipping them. Also works once setup is done.
+        case 'bed': move('bed'); return 'going to the bed.'
         case 'setup': move('owner'); return 'setup restarted, send me a /tpa.'
         case 'stage': return `${stage()}${state.data.setupError ? ' (stuck: ' + state.data.setupError + ')' : ''}`
         default: return null
