@@ -95,3 +95,32 @@ test('gapples when hurt, normal food when hungry, nothing when fine', () => {
   assert.strictEqual(chooseFood({ health: 20, food: 10 }, items).name, 'bread')
   assert.strictEqual(chooseFood({ health: 20, food: 20 }, items), null)
 })
+
+test('wears the best armour, leaving the chest to the elytra in flight', () => {
+  const { chooseArmor } = require('../src/survival')
+  const items = [{ name: 'iron_helmet' }, { name: 'diamond_helmet' }, { name: 'netherite_chestplate' }]
+  assert.strictEqual(chooseArmor({}, items, false).item.name, 'diamond_helmet')
+  const helmeted = { head: { name: 'diamond_helmet' }, torso: { name: 'elytra' } }
+  assert.strictEqual(chooseArmor(helmeted, items, false).item.name, 'netherite_chestplate')
+  assert.strictEqual(chooseArmor(helmeted, items, true), null)
+})
+
+test('flight puts the elytra on before checking it', async () => {
+  const { createActions } = require('../src/actions')
+  const slots = []
+  slots[6] = { name: 'netherite_chestplate' }
+  const flags = []
+  const bot = {
+    entity: { position: new Vec3(3000, 70, 0), onGround: true, elytraFlying: false },
+    health: 20,
+    registry: { itemsByName: { elytra: { maxDurability: 432 } } },
+    getEquipmentDestSlot: () => 6,
+    inventory: { slots, items: () => [{ name: 'elytra' }] },
+    equip: async (item) => { slots[6] = item }
+  }
+  const survival = { idle: async () => {}, busy: () => false, setFlying: (v) => flags.push(v) }
+  const actions = createActions({ onMain: true, bot }, () => {}, survival)
+  assert.strictEqual(await actions.flyEast(2100), true)
+  assert.strictEqual(slots[6].name, 'elytra')
+  assert.deepStrictEqual(flags, [true, false])
+})

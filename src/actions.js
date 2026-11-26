@@ -73,7 +73,7 @@ function createActions (connection, log, survival) {
   async function unpack () {
     const b = bot()
     const box = b.inventory.items().find(i => /shulker_box$/.test(i.name))
-    if (!box || !missing().length) return
+    if (!box) return
     const feet = b.entity.position.floored()
     const spot = [[1, 0], [-1, 0], [0, 1], [0, -1], [2, 0], [-2, 0]]
       .map(([x, z]) => feet.offset(x, 0, z))
@@ -203,6 +203,22 @@ function createActions (connection, log, survival) {
   // Flies toward +x until targetX, then glides down. Resolves true once there
   // and standing on the ground.
   async function flyEast (targetX) {
+    survival.setFlying(true)
+    try {
+      // The elytra must be on before its durability is checked.
+      await survival.idle()
+      if (worn()?.name !== 'elytra') {
+        const wings = find('elytra')
+        if (!wings) throw new Error('no elytra')
+        await bot().equip(wings, 'torso')
+      }
+      return await glide(targetX)
+    } finally {
+      survival.setFlying(false) // the chestplate goes back on
+    }
+  }
+
+  async function glide (targetX) {
     const isBlocked = (p) => { const block = connection.bot.blockAt(p); return !block || solid(block) || lava(block) }
     const isLava = (p) => lava(connection.bot.blockAt(p))
     let lastBoost = 0

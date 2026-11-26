@@ -21,9 +21,10 @@ All commands below are whispers from `OWNER`: `/w BotName !command`.
 4. It sends you `/tpa`. Accept it with the bot's name, standing by your bed.
 5. It clicks the nearest bed and runs `/sethome base`.
 
-Always on: auto respawn, a totem kept in the off hand, gapples eaten below 7 hearts.
+Always on: wears the best armour it has (the elytra replaces the chestplate only in flight; put armour
+in the setup shulker), auto respawn, a totem kept in the off hand, gapples eaten below 7 hearts.
 `/kill` drops everything, so while the bot carries any gear it returns with `/home` instead.
-Empty its inventory and off hand if you prefer `/kill`.
+Armour counts as gear, so an armoured bot always returns with `/home`.
 
 In the nether it flies slowly, keeps away from walls and lava, and lands to recover when hurt.
 This reduces the risk but cannot remove it, so do not give it gear you cannot lose.
