@@ -7,7 +7,10 @@ drops the shulker, uses `/kill` to return to its bed and serves the next one.
 
 ## 1. First-time setup (the bot does it)
 
-Register the bot account once with a normal client (`/register`), then put it in `.env` and start it.
+**New account:** in `.env` set `BOT_USERNAME`, `OWNER` and `REGISTER_EMAIL`, leave `BOT_PASSWORD`
+empty, and start. The bot sends `/register` once. Put the emailed password in `BOT_PASSWORD`
+and restart. **Existing account:** just set `BOT_PASSWORD`.
+
 All commands below are whispers from `OWNER`: `/w BotName !command`.
 
 1. Send the bot a `/tpa`. It accepts (if it does not, whisper `!accept`).

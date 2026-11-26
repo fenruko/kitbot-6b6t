@@ -27,6 +27,7 @@ function readConfig (env = process.env) {
   return {
     username: (env.BOT_USERNAME || '').trim(),
     password: env.BOT_PASSWORD || '',
+    registerEmail: (env.REGISTER_EMAIL || '').trim(),
     owner: (env.OWNER || '').trim(),
     homeName: env.HOME_NAME || 'base',
     flyTargetX: num('FLY_TARGET_X', 2100),

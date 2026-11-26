@@ -1,12 +1,21 @@
 'use strict'
+const fs = require('fs')
+const path = require('path')
 const readline = require('readline')
 const { loadEnvFile, readConfig } = require('./config')
 const { log, hide } = require('./log')
 
 loadEnvFile()
 const config = readConfig()
-if (!config.username || !config.password || !config.owner) {
-  log('set BOT_USERNAME, BOT_PASSWORD and OWNER in .env')
+if (!config.username || !config.owner || !(config.password || config.registerEmail)) {
+  log('set BOT_USERNAME, OWNER and BOT_PASSWORD (or REGISTER_EMAIL for a new account) in .env')
+  process.exit(3)
+}
+// /register is sent only once; the password then arrives by email.
+const registerMarker = path.join(path.dirname(config.dataFile), 'register-sent')
+if (!config.password && fs.existsSync(registerMarker)) {
+  log('already sent /register. Put the emailed password in BOT_PASSWORD and restart.')
+  log('To send it again, delete ' + registerMarker)
   process.exit(3)
 }
 hide(config.password)
@@ -52,6 +61,11 @@ const lastCommand = new Map()
 
 connection.on('ready', () => { ready = true; log('on main, ready') })
 connection.on('down', () => { ready = false; outbox.length = 0 })
+connection.on('registered', () => {
+  fs.mkdirSync(path.dirname(registerMarker), { recursive: true })
+  fs.writeFileSync(registerMarker, new Date().toISOString())
+  log('sent /register. Check your email, put the password in BOT_PASSWORD, then restart.')
+})
 connection.on('fatal', (code) => {
   log(code === 2 ? 'verification needed: open the link above, then wait' : 'cannot continue, fix the problem above')
   process.exit(code)

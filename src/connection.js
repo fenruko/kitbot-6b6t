@@ -106,8 +106,8 @@ class Connection extends EventEmitter {
       if (!line || position === 'game_info') return
       if (session.kind === 'auth') {
         log('[server] ' + line)
-        if (!session.loginSent && /\/login/i.test(line)) this.login(bot, alive, session)
-        if (/logged in|successfully/i.test(line)) this.walkToPortal(bot, alive, session)
+        if (!session.loginSent && /\/(login|register)/i.test(line)) this.login(bot, alive, session)
+        if (this.config.password && /logged in|successfully/i.test(line)) this.walkToPortal(bot, alive, session)
         const code = /wrong password|incorrect password/i.test(line) ? 3 : 0
         if (code) { session.fatal = code; bot.quit() }
         return
@@ -171,9 +171,21 @@ class Connection extends EventEmitter {
   login (bot, alive, session) {
     if (!alive() || session.kind !== 'auth') return
     session.loginSent = true
+    if (!this.config.password) return this.register(bot, session)
     bot.chat('/login ' + this.config.password)
     log('sent /login')
     setTimeout(() => this.walkToPortal(bot, alive, session), 15000)
+  }
+
+  // New account: ask 6b6t to email a password, show its answer, then stop.
+  register (bot, session) {
+    const email = this.config.registerEmail
+    bot.chat(`/register ${email} ${email}`)
+    this.emit('registered')
+    setTimeout(() => {
+      session.fatal = 3
+      bot.quit()
+    }, 15000)
   }
 
   // Physics stays off until the floor exists, or the bot falls through it.
