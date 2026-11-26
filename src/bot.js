@@ -66,6 +66,22 @@ connection.on('registered', () => {
   fs.writeFileSync(registerMarker, new Date().toISOString())
   log('sent /register. Check your email, put the password in BOT_PASSWORD, then restart.')
 })
+// 6b6t wants a captcha. Save the link and, if configured, push it to Discord so it can be opened in time.
+connection.on('verify', (url) => {
+  if (!url) return
+  log('VERIFY LINK: ' + url)
+  try {
+    fs.mkdirSync(path.dirname(config.dataFile), { recursive: true })
+    fs.writeFileSync(path.join(path.dirname(config.dataFile), 'verify.txt'), url + '\n' + new Date().toISOString() + '\n')
+  } catch {}
+  if (config.discordWebhook) {
+    fetch(config.discordWebhook, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ content: `6b6t verification for **${config.username}**: ${url}\nOpen it from the same network as the bot.` })
+    }).catch((e) => log('webhook failed: ' + e.message))
+  }
+})
 connection.on('fatal', (code) => {
   log(code === 2 ? 'verification needed: open the link above, then wait' : 'cannot continue, fix the problem above')
   process.exit(code)

@@ -80,8 +80,16 @@ Host console lines starting with `/` are sent to the server.
 
 ## If it stops
 
-- **Verification link in the log:** 6b6t wants to check the connection. It may need to be
-  opened from the same network as the bot, which can be impossible on a shared host.
+- **Verification link in the log:** 6b6t wants a captcha, and the page must be opened from the
+  same network as the bot. The link is also saved to `data/verify.txt`. On a host you cannot
+  browse from, use one of these:
+  - `DISCORD_WEBHOOK` in `.env`: the link is posted to a Discord channel the moment it appears.
+  - `PROXY=socks5://user:pass@host:1080`: the bot connects through a SOCKS5 proxy on your own
+    connection (for example a proxy app on your phone or PC), so the captcha is done from the same IP.
+  - Run the bot once on your own PC, finish the captcha, then move it to the host (only works if
+    the host shares that IP, so the proxy is the reliable route).
+  After completing it, the bot retries after `VERIFY_RETRY` seconds (default 1800, minimum 60).
+  Retrying too early can lengthen 6b6t's wait.
 - **`PAUSED`:** out of kits, bed missing, or it could not get home. Fix it, then `!resume`.
 - **Host rules:** LemonHost's terms describe Discord bot hosting. Ask them first.
 

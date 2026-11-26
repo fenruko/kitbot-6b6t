@@ -9,6 +9,7 @@ const ROOT = __dirname
 const env = loadEnvFile(path.join(ROOT, '.env'))
 const autoUpdate = (env.AUTO_UPDATE || 'true').toLowerCase() === 'true'
 const interval = Math.max(Number(env.UPDATE_INTERVAL) || 60, Number(env.UPDATE_MIN_SECONDS) || 30) * 1000
+const verifyWait = Math.max(Number(env.VERIFY_RETRY) || 1800, 60) * 1000
 const script = env.BOT_SCRIPT || path.join(ROOT, 'src', 'bot.js')
 
 const run = (cmd, args) => new Promise((resolve, reject) => {
@@ -37,7 +38,7 @@ function startBot () {
     if (stopping) return
     if (wantUpdate) return pull()
     // 2: verification (retrying early lengthens 6b6t's wait). 3: needs a fix.
-    const wait = code === 2 ? 30 * 60000 : code === 3 ? 60 * 60000 : 30000
+    const wait = code === 2 ? verifyWait : code === 3 ? 60 * 60000 : 30000
     log(`bot exited (${code}), restarting in ${wait / 1000}s`)
     restartTimer = setTimeout(startBot, wait)
   })

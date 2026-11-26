@@ -161,3 +161,13 @@ test('server detection and kick types', () => {
   assert.strictEqual(fatalKick('Connected account limit'), 3)
   assert.strictEqual(fatalKick('logging in too fast'), 0)
 })
+
+test('verification kick: link is extracted and proxy url parsed', () => {
+  const { verifyLink } = require('../src/connection')
+  const { parseProxy } = require('../src/proxy')
+  const kick = JSON.stringify({ extra: [{ text: 'Open ' }, { color: 'aqua', text: 'https://verify.6b6t.org/38WW5B ' }, { text: 'in a browser' }], text: '' })
+  assert.strictEqual(verifyLink(kick), 'https://verify.6b6t.org/38WW5B')
+  assert.strictEqual(verifyLink('no link here'), '')
+  assert.deepStrictEqual(parseProxy('socks5://me:p%40ss@1.2.3.4:1081'), { host: '1.2.3.4', port: 1081, type: 5, userId: 'me', password: 'p@ss' })
+  assert.throws(() => parseProxy('http://1.2.3.4:80'))
+})

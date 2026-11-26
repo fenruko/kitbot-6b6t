@@ -18,6 +18,7 @@ Module.prototype._compile = function (content, filename, ...rest) {
   return compile.call(this, content, filename, ...rest)
 }
 const mineflayer = require('mineflayer')
+const { socksConnect } = require('./proxy')
 
 const VERSION = '1.21.11'
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms))
@@ -39,6 +40,12 @@ function fatalKick (text) {
   if (/verify|anti bot|prove you'?re a human|vpn\/proxy|verification link/i.test(text)) return 2
   if (/wrong password|incorrect password|own the mojang account|choose another username|connected account limit|unsupported minecraft version|outdated (client|server)/i.test(text)) return 3
   return 0
+}
+
+// The captcha link inside a verification kick, if there is one.
+function verifyLink (text) {
+  const m = /https?:\/\/[^\s"'\\<>]+/.exec(String(text))
+  return m ? m[0] : ''
 }
 
 class Connection extends EventEmitter {
@@ -63,7 +70,9 @@ class Connection extends EventEmitter {
       version: VERSION,
       physicsEnabled: false,
       logErrors: false,
-      hideErrors: true
+      hideErrors: true,
+      // PROXY lets the bot leave from your own connection, so the captcha can be done from your device.
+      ...(this.config.proxy ? { connect: socksConnect(this.config.proxy, host) } : {})
     })
     const c = bot._client
     const session = { logins: 0, brand: '', switching: false, loginSent: false, kind: '', fatal: 0, readyTimer: null }
@@ -122,6 +131,7 @@ class Connection extends EventEmitter {
       const text = typeof reason === 'string' ? reason : JSON.stringify(reason)
       log('kicked: ' + text.slice(0, 800))
       session.fatal = fatalKick(text)
+      if (session.fatal === 2) this.emit('verify', verifyLink(text))
     })
     bot.on('error', (e) => log('connection error: ' + e.message))
 
@@ -230,4 +240,4 @@ class Connection extends EventEmitter {
   }
 }
 
-module.exports = { Connection, classify, fatalKick }
+module.exports = { Connection, classify, fatalKick, verifyLink }

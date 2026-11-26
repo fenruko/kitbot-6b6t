@@ -41,6 +41,8 @@ function readConfig (env = process.env) {
     tpaDeniedPattern: regex('TPA_DENIED_PATTERN'),
     servers: (env.SERVERS || 'alt.6b6t.org,alt4.6b6t.org,alt5.6b6t.org,alt2.6b6t.org,alt3.6b6t.org')
       .split(',').map(s => s.trim()).filter(Boolean),
+    proxy: (env.PROXY || '').trim(),
+    discordWebhook: (env.DISCORD_WEBHOOK || '').trim(),
     dataFile: env.DATA_FILE || path.join(ROOT, 'data', 'state.json')
   }
 }
