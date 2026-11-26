@@ -3,23 +3,36 @@
 Delivers one shulker kit per player on 6b6t. Players whisper `!kit`; the bot sends `/tpa`,
 drops the shulker, uses `/kill` to return to its bed and serves the next one.
 
-**Not yet tested on 6b6t.** Do the checks below before opening it to others.
+**Not yet tested on 6b6t.** The portal building and elytra flight have never run on a real server.
 
-## 1. Set up the bot account (once, with a normal Minecraft client)
+## 1. First-time setup (the bot does it)
 
-1. Join 6b6t on the bot account and `/register` it, then `/login`.
-2. Escape spawn: walk until X or Z is past 5000 (`/kill` gives a new spawn spot if stuck).
-3. `/tpa YourMain`, accept on your main, so the bot account arrives at your base.
-4. Place a bed in the overworld, right-click it, and run `/sethome base`.
-5. Put chests or barrels within arm's reach (about 3 blocks) of where you respawn.
-6. Fill them with **already packed shulkers**, one shulker per kit.
-7. Empty the bot's inventory and armour slots (`/kill` drops everything), then log out.
+Register the bot account once with a normal client (`/register`), then put it in `.env` and start it.
+All commands below are whispers from `OWNER`: `/w BotName !command`.
 
-Suggested kit: armour, sword, food, totems, obsidian, flint and steel.
-To restock later, just add shulkers to the chests. No restart needed (use `!resume` if it paused).
+1. Send the bot a `/tpa`. It accepts (if it does not, whisper `!accept`).
+2. Drop it the setup kit, loose or as one shulker, then whisper `!go`. It needs:
+   1 elytra, 16+ firework rockets, 28+ obsidian, flint and steel.
+   2+ totems, 4+ golden apples. Also give it a diamond or netherite pickaxe, and spares.
+3. It builds a portal, flies the nether to x = 2100, builds a second portal and exits.
+4. It sends you `/tpa`. Accept it with the bot's name, standing by your bed.
+5. It clicks the nearest bed and runs `/sethome base`.
 
-Players cannot be reached at spawn: `/tpa` is off until they are past 5000 blocks,
-so portal materials in the kit do not help them escape spawn the first time.
+Always on: auto respawn, a totem kept in the off hand, gapples eaten below 7 hearts.
+`/kill` drops everything, so while the bot carries any gear it returns with `/home` instead.
+Empty its inventory and off hand if you prefer `/kill`.
+
+In the nether it flies slowly, keeps away from walls and lava, and lands to recover when hurt.
+This reduces the risk but cannot remove it, so do not give it gear you cannot lose.
+
+Then fill chests within about 3 blocks of the respawn spot with
+**already packed shulkers**, one per kit.
+
+Setup commands: `!stage` `!accept` `!go` `!retry` `!skip` (finish a stage by hand) `!setup` (start over).
+A bot that is already set up: type `!skip` in the host console until it says `done`.
+
+Suggested player kit: armour, sword, food, totems, obsidian, flint and steel.
+Players cannot be reached at spawn: `/tpa` is off until they are past 5000 blocks.
 
 ## 2. Run it
 

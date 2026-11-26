@@ -29,6 +29,7 @@ function readConfig (env = process.env) {
     password: env.BOT_PASSWORD || '',
     owner: (env.OWNER || '').trim(),
     homeName: env.HOME_NAME || 'base',
+    flyTargetX: num('FLY_TARGET_X', 2100),
     tpaCooldownMs: num('TPA_COOLDOWN', 420) * 1000,
     homeCooldownMs: num('HOME_COOLDOWN', 300) * 1000,
     queueMax: num('QUEUE_MAX', 10),

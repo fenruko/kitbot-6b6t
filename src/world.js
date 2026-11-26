@@ -51,6 +51,8 @@ function createWorld (connection) {
       return entity && entity.position.distanceTo(b.entity.position) <= 6 ? entity : null
     },
     atBase: () => containers().length > 0,
+    // Anything in the inventory, armour or off hand.
+    carrying: () => bot().inventory.slots.some(Boolean),
     shulkers: () => {
       const b = bot()
       const held = b.inventory.items().filter(isShulker)

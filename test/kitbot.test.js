@@ -57,15 +57,16 @@ test('crash recovery', () => {
 })
 
 // A fake world: base at the origin, the player 10000 blocks away.
-function fake ({ accept = true, present = true, pickup = 'target', dieOnWay = false } = {}) {
+function fake ({ accept = true, present = true, pickup = 'target', dieOnWay = false, gear = false } = {}) {
   let time = 1e9
-  const w = { x: 0, held: 0, stock: 2, log: [], killedHolding: false }
+  const w = { gear, x: 0, held: 0, stock: 2, log: [], killedHolding: false }
   Object.assign(w, {
     now: () => time,
     sleep: async (ms) => { time += ms },
     online: () => 'A',
     health: () => 20,
     atBase: () => w.x === 0,
+    carrying: () => !!w.gear,
     shulkers: () => w.held,
     position: () => ({ dimension: 'overworld', pos: { x: w.x, distanceTo: (o) => Math.abs(w.x - o.x) } }),
     command: (c) => {
@@ -98,6 +99,21 @@ test('successful delivery: tpa, drop, kill', async () => {
   assert.deepStrictEqual(world.log, ['/tpa A', '/kill'])
   assert.strictEqual(world.stock, 1)
   assert.ok(state.data.served.a)
+})
+
+test('carrying a totem: goes back with /home, never /kill', async () => {
+  const { world } = await runDelivery({ gear: true })
+  assert.deepStrictEqual(world.log, ['/tpa A', '/home base'])
+})
+
+test('chests at the player do not count as home', async () => {
+  const world = fake({ gear: true })
+  world.atBase = () => true
+  const state = newState(world.now)
+  state.request('A', config)
+  state.next()
+  await createDelivery({ world, state, config, tell: () => {}, log: () => {}, notifyOwner: () => {} }).deliver('A')
+  assert.deepStrictEqual(world.log, ['/tpa A', '/home base'])
 })
 
 test('not accepted: kit goes back, player not marked served', async () => {

@@ -59,6 +59,7 @@ class Connection extends EventEmitter {
       host,
       username: this.config.username,
       auth: 'offline',
+      respawn: true, // auto respawn
       version: VERSION,
       physicsEnabled: false,
       logErrors: false,
@@ -90,6 +91,14 @@ class Connection extends EventEmitter {
         this.failures = 0
         session.readyTimer = setTimeout(() => { if (alive() && this.onMain) this.emit('ready') }, 8000)
       }
+    })
+
+    bot.on('death', () => this.emit('death'))
+    // Dimension change: hold physics until the chunks under us exist.
+    bot.on('respawn', () => {
+      if (session.kind !== 'main') return
+      bot.physicsEnabled = false
+      this.enablePhysics(bot, alive, session.logins, session)
     })
 
     bot.on('messagestr', (raw, position) => {

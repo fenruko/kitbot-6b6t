@@ -9,7 +9,7 @@ class State {
   constructor (file, now = Date.now) {
     this.file = file
     this.now = now
-    this.data = { queue: [], served: {}, current: null, paused: false, day: '', dayCount: 0, tpaReadyAt: 0, homeReadyAt: 0 }
+    this.data = { queue: [], served: {}, current: null, paused: false, day: '', dayCount: 0, tpaReadyAt: 0, homeReadyAt: 0, setup: 'owner', setupError: '' }
     let text = null
     try { text = fs.readFileSync(file, 'utf8') } catch (e) { if (e.code !== 'ENOENT') throw e }
     // A corrupt file throws on purpose: starting empty would hand out kits again.

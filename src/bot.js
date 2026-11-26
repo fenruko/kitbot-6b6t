@@ -16,6 +16,9 @@ const { State } = require('./state')
 const { parseLine, handle } = require('./commands')
 const { createWorld } = require('./world')
 const { createDelivery } = require('./delivery')
+const { createActions } = require('./actions')
+const { createJourney } = require('./journey')
+const { createSurvival } = require('./survival')
 
 const state = new State(config.dataFile)
 const connection = new Connection(config)
@@ -23,7 +26,7 @@ const world = createWorld(connection)
 
 // Messages go out one at a time so the server does not treat them as spam.
 const outbox = []
-function tell (name, text) { if (outbox.length < 30) outbox.push(`/msg ${name} ${text}`) }
+function tell (name, text) { if (outbox.length < 30) outbox.push(`/w ${name} ${text}`) }
 setInterval(() => {
   if (connection.ready() && outbox.length) connection.bot.chat(outbox.shift())
 }, 2000)
@@ -31,6 +34,16 @@ setInterval(() => {
 const delivery = createDelivery({
   world, state, config, tell, log, notifyOwner: (text) => tell(config.owner, text)
 })
+
+const journey = createJourney({ actions: createActions(connection, log, createSurvival(connection, log)), state, config, tell, log })
+const SETUP_COMMANDS = new Set(['accept', 'go', 'retry', 'skip', 'setup', 'stage'])
+connection.on('death', () => journey.died())
+
+function respond (request, isOwner) {
+  if (isOwner && request.whisper && SETUP_COMMANDS.has(request.command)) return journey.command(request.command)
+  if (!journey.done() && request.command === 'kit') return 'still setting up, try later.'
+  return handle(request, { state, config, isOwner, stock: world.stock })
+}
 
 let busy = false
 let ready = false
@@ -45,8 +58,9 @@ connection.on('fatal', (code) => {
 })
 connection.on('line', (line) => {
   delivery.onServerLine(line)
+  journey.onServerLine(line)
   // While delivering, keep a record of what the server says so patterns can be added.
-  if (busy && !line.includes('»')) log('[server] ' + line)
+  if ((busy || !journey.done()) && !line.includes('»')) log('[server] ' + line)
   const request = parseLine(line, config)
   if (!request) {
     if (line.includes('!kit') && !line.includes('»')) log('unrecognised message format: ' + line)
@@ -56,7 +70,7 @@ connection.on('line', (line) => {
   if (key === config.username.toLowerCase()) return
   if (Date.now() - (lastCommand.get(key) || 0) < 5000) return
   lastCommand.set(key, Date.now())
-  const reply = handle(request, { state, config, isOwner: key === config.owner.toLowerCase(), stock: world.stock })
+  const reply = respond(request, key === config.owner.toLowerCase())
   log(`${request.from}: !${request.command}`)
   if (reply) tell(request.from, reply)
 })
@@ -71,6 +85,7 @@ async function tick () {
   if (!ready || !connection.ready()) return
   busy = true
   try {
+    if (!journey.done()) return await journey.tick()
     if (!recovered || (!state.data.paused && world.shulkers())) {
       state.recover()
       // Never carry a leftover kit into the next job.
@@ -105,7 +120,7 @@ readline.createInterface({ input: process.stdin }).on('line', (input) => {
   const m = /^!(\w+)(?:\s+(\S+))?/.exec(text)
   if (!m) return
   const request = { from: config.owner, command: m[1], arg: m[2] || '', whisper: true }
-  log(handle(request, { state, config, isOwner: true, stock: world.stock }) || 'unknown command')
+  log(respond(request, true) || 'unknown command')
 })
 
 for (const signal of ['SIGINT', 'SIGTERM']) {
