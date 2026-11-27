@@ -65,7 +65,26 @@ delivery to finish, runs `git pull --ff-only`, installs libraries if needed and 
 
 Players (whisper): `!kit` `!queue` `!leave` `!help`
 
-Owner (whisper or host console): `!status` `!pause` `!resume` `!reset <name>`
+Owner (whisper or host console): `!status` `!pause` `!resume` `!reset <name>` `!inv` (what the bot carries)
+
+### Whitelist
+
+    /w BotName !wl add Steve
+    /w BotName !wl remove Steve
+    /w BotName !wl list          (or just !wl)
+
+`!allow Steve` and `!unallow Steve` do the same. Whitelisted players (and the owner) can `/tpa` to
+the bot and it accepts automatically. A whitelisted player standing next to the bot when their turn
+comes gets the kit dropped on the spot, with no `/tpa` from the bot. Whether 6b6t lets a player
+`/tpa` from spawn is the server's rule, the bot only accepts. Set `WHITELIST_ONLY=true` to
+make `!kit` itself whitelist-only. The list is saved in `data/state.json`.
+
+### Why the bot did not `/kill`
+
+`/kill` drops everything the bot carries, so it is used only when the bot holds nothing but
+`EXPENDABLE` items (by default the setup tools: elytra, rockets, obsidian, flint and steel,
+pickaxes). Any other item, such as totems, golden apples or armour, makes it return with `/home`.
+The log says which item was the reason, and `!inv` lists what it carries.
 
 Host console lines starting with `/` are sent to the server.
 

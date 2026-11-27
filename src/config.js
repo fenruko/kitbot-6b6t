@@ -41,6 +41,9 @@ function readConfig (env = process.env) {
     tpaDeniedPattern: regex('TPA_DENIED_PATTERN'),
     servers: (env.SERVERS || 'alt.6b6t.org,alt4.6b6t.org,alt5.6b6t.org,alt2.6b6t.org,alt3.6b6t.org')
       .split(',').map(s => s.trim()).filter(Boolean),
+    whitelistOnly: bool('WHITELIST_ONLY', false),
+    // Items the bot may lose to /kill. Anything else it carries makes it return with /home.
+    expendable: new RegExp(env.EXPENDABLE || '^(elytra|firework_rocket|obsidian|flint_and_steel|(wooden|stone|iron|golden|diamond|netherite)_pickaxe)$', 'i'),
     proxy: (env.PROXY || '').trim(),
     discordWebhook: (env.DISCORD_WEBHOOK || '').trim(),
     dataFile: env.DATA_FILE || path.join(ROOT, 'data', 'state.json')

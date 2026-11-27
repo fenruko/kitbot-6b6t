@@ -53,6 +53,20 @@ function createWorld (connection) {
     atBase: () => containers().length > 0,
     // Anything in the inventory, armour or off hand.
     carrying: () => bot().inventory.slots.some(Boolean),
+    // Names of what is held, as "name xN". Slots 0-4 are the crafting grid and are ignored.
+    carried: () => {
+      const counts = new Map()
+      bot().inventory.slots.forEach((item, slot) => {
+        if (item && slot > 4) counts.set(item.name, (counts.get(item.name) || 0) + item.count)
+      })
+      return [...counts].map(([name, n]) => n > 1 ? `${name} x${n}` : name)
+    },
+    // Item names in the inventory that /kill would lose and the bot should not.
+    valuables: (expendable) => {
+      const names = new Set()
+      bot().inventory.slots.forEach((item, slot) => { if (item && slot > 4 && !expendable.test(item.name)) names.add(item.name) })
+      return [...names]
+    },
     shulkers: () => {
       const b = bot()
       const held = b.inventory.items().filter(isShulker)

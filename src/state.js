@@ -9,7 +9,7 @@ class State {
   constructor (file, now = Date.now) {
     this.file = file
     this.now = now
-    this.data = { queue: [], served: {}, current: null, paused: false, day: '', dayCount: 0, tpaReadyAt: 0, homeReadyAt: 0, setup: 'owner', setupError: '' }
+    this.data = { queue: [], served: {}, current: null, paused: false, day: '', dayCount: 0, tpaReadyAt: 0, homeReadyAt: 0, setup: 'owner', setupError: '', whitelist: [] }
     let text = null
     try { text = fs.readFileSync(file, 'utf8') } catch (e) { if (e.code !== 'ENOENT') throw e }
     // A corrupt file throws on purpose: starting empty would hand out kits again.
@@ -85,6 +85,26 @@ class State {
   recover () {
     const cur = this.data.current
     if (cur) this.finish(cur.stage === 'dropping' ? 'served' : 'requeue')
+  }
+
+  allowed (name) {
+    return this.data.whitelist.some(n => lower(n) === lower(name))
+  }
+
+  // Returns true if the list changed.
+  allow (name) {
+    if (this.allowed(name)) return false
+    this.data.whitelist.push(name)
+    this.save()
+    return true
+  }
+
+  unallow (name) {
+    const i = this.data.whitelist.findIndex(n => lower(n) === lower(name))
+    if (i < 0) return false
+    this.data.whitelist.splice(i, 1)
+    this.save()
+    return true
   }
 
   reset (name) {

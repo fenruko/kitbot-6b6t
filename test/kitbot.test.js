@@ -14,7 +14,7 @@ const config = { ...readConfig({ BOT_USERNAME: 'KitBot', OWNER: 'Boss' }), queue
 const newState = (now) => new State(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'kit-')), 's.json'), now)
 
 test('whispers parse, public chat cannot spoof them', () => {
-  assert.deepStrictEqual(parseLine('Steve whispers: !kit', config), { from: 'Steve', command: 'kit', arg: '', whisper: true })
+  assert.deepStrictEqual(parseLine('Steve whispers: !kit', config), { from: 'Steve', command: 'kit', arg: '', arg2: '', whisper: true })
   assert.strictEqual(parseLine('From Steve: !queue', config).command, 'queue')
   assert.strictEqual(parseLine('Evil » Boss whispers: !pause', config), null)
   assert.strictEqual(parseLine('Steve » !kit', config), null)
@@ -67,6 +67,8 @@ function fake ({ accept = true, present = true, pickup = 'target', dieOnWay = fa
     health: () => 20,
     atBase: () => w.x === 0,
     carrying: () => !!w.gear,
+    carried: () => w.gear ? [].concat(w.gear === true ? 'totem_of_undying' : w.gear) : [],
+    valuables: (re) => [].concat(w.gear === true ? 'totem_of_undying' : w.gear || []).filter(n => !re.test(n)),
     shulkers: () => w.held,
     position: () => ({ dimension: 'overworld', pos: { x: w.x, distanceTo: (o) => Math.abs(w.x - o.x) } }),
     command: (c) => {
@@ -170,4 +172,48 @@ test('verification kick: link is extracted and proxy url parsed', () => {
   assert.strictEqual(verifyLink('no link here'), '')
   assert.deepStrictEqual(parseProxy('socks5://me:p%40ss@1.2.3.4:1081'), { host: '1.2.3.4', port: 1081, type: 5, userId: 'me', password: 'p@ss' })
   assert.throws(() => parseProxy('http://1.2.3.4:80'))
+})
+
+test('whitelist commands', () => {
+  const { handle, parseLine } = require('../src/commands')
+  const { State } = require('../src/state')
+  const state = new State(path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'wl-')), 's.json'))
+  const config = { username: 'Bot', whitelistOnly: true, queueMax: 10, dailyLimit: 0, onePerPlayer: true }
+  const run = (line, owner = true) => handle(parseLine(line), { state, config, isOwner: owner, stock: () => 1, carried: () => ['totem_of_undying'] })
+  assert.match(run('Boss whispers: !wl'), /empty/)
+  assert.match(run('Boss whispers: !wl add Steve'), /Steve added/)
+  assert.match(run('Boss whispers: !allow Alex'), /Alex added/)
+  assert.match(run('Boss whispers: !wl Alex'), /already/)
+  assert.match(run('Boss whispers: !wl bad!name'), /not a valid/)
+  assert.ok(state.allowed('steve'))
+  assert.match(run('Boss whispers: !wl list'), /Steve, Alex/)
+  assert.match(run('Boss whispers: !wl remove steve'), /removed/)
+  assert.match(run('Boss whispers: !unallow Alex'), /removed/)
+  assert.ok(!state.allowed('Alex'))
+  assert.strictEqual(run('Mallory whispers: !wl add Mallory', false), null)
+  assert.match(run('Mallory whispers: !kit', false), /whitelisted/)
+  state.allow('Mallory')
+  assert.match(run('Mallory whispers: !kit', false), /queued, position 1.*\/tpa Bot/)
+  assert.match(run('Boss whispers: !inv'), /totem_of_undying/)
+})
+
+test('only setup tools in the inventory: it still uses /kill', async () => {
+  const { world } = await runDelivery({ gear: ['elytra', 'firework_rocket', 'diamond_pickaxe'] })
+  assert.deepStrictEqual(world.log, ['/tpa A', '/kill'])
+})
+
+test('one valuable item among setup tools: /home instead of /kill', async () => {
+  const { world } = await runDelivery({ gear: ['elytra', 'enchanted_golden_apple'] })
+  assert.deepStrictEqual(world.log, ['/tpa A', '/home base'])
+})
+
+test('a player standing next to the bot gets the kit without a /tpa', async () => {
+  const world = fake()
+  world.nearby = () => ({})
+  const state = newState(world.now)
+  state.request('A', config)
+  state.next()
+  await createDelivery({ world, state, config, tell: () => {}, log: () => {}, notifyOwner: () => {} }).deliver('A')
+  assert.ok(!world.log.some(c => c.startsWith('/tpa')))
+  assert.ok(state.data.served.a)
 })

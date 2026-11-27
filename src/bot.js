@@ -22,7 +22,7 @@ hide(config.password)
 
 const { Connection } = require('./connection')
 const { State } = require('./state')
-const { parseLine, handle } = require('./commands')
+const { parseLine, handle, clean } = require('./commands')
 const { createWorld } = require('./world')
 const { createDelivery } = require('./delivery')
 const { createActions } = require('./actions')
@@ -51,7 +51,7 @@ connection.on('death', () => journey.died())
 function respond (request, isOwner) {
   if (isOwner && request.whisper && SETUP_COMMANDS.has(request.command)) return journey.command(request.command)
   if (!journey.done() && request.command === 'kit') return 'still setting up, try later.'
-  return handle(request, { state, config, isOwner, stock: world.stock })
+  return handle(request, { state, config, isOwner, stock: world.stock, carried: world.carried })
 }
 
 let busy = false
@@ -91,6 +91,15 @@ connection.on('line', (line) => {
   journey.onServerLine(line)
   // While delivering, keep a record of what the server says so patterns can be added.
   if ((busy || !journey.done()) && !line.includes('»')) log('[server] ' + line)
+  // Whitelisted players (and the owner) can /tpa to the bot, e.g. from spawn.
+  const incoming = !line.includes('»') && /^(?:\[[^\]]{1,20}\] )?([A-Za-z0-9_]{1,16}) wants to teleport to you\./i.exec(clean(line))
+  if (incoming && journey.done() && !busy) {
+    const who = incoming[1]
+    if (who.toLowerCase() === config.owner.toLowerCase() || state.allowed(who)) {
+      connection.bot.chat(`/tpy ${who}`)
+      log(`accepted /tpa from ${who}`)
+    }
+  }
   const request = parseLine(line, config)
   if (!request) {
     if (line.includes('!kit') && !line.includes('»')) log('unrecognised message format: ' + line)
@@ -147,9 +156,9 @@ process.on('message', (m) => {
 readline.createInterface({ input: process.stdin }).on('line', (input) => {
   const text = input.trim()
   if (text.startsWith('/') && connection.bot) return connection.bot.chat(text)
-  const m = /^!(\w+)(?:\s+(\S+))?/.exec(text)
+  const m = /^!(\w+)(?:\s+(\S+))?(?:\s+(\S+))?/.exec(text)
   if (!m) return
-  const request = { from: config.owner, command: m[1], arg: m[2] || '', whisper: true }
+  const request = { from: config.owner, command: m[1].toLowerCase(), arg: m[2] || '', arg2: m[3] || '', whisper: true }
   log(respond(request, true) || 'unknown command')
 })
 
