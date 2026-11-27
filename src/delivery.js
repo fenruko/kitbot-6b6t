@@ -142,10 +142,17 @@ function createDelivery ({ world, state, config, tell, log, notifyOwner }) {
     await world.sleep(1500)
     // /kill would drop totems, gapples and anything else, so use /home then.
     const valuables = world.valuables(config.expendable)
-    const useKill = valuables.length === 0
+    let useKill = valuables.length === 0
     if (useKill) {
       if (world.carrying()) log('dropping spare setup items with /kill: ' + world.carried().join(', '))
-      await world.suicide()
+      log('sending /kill')
+      try {
+        await world.suicide()
+      } catch (e) {
+        // Usually /kill is blocked or needs something else. The server's reply is in the log just above.
+        log('/kill did not kill me: ' + e.message + '. Going home with /home instead.')
+        useKill = false
+      }
     } else {
       log('using /home instead of /kill, carrying: ' + valuables.join(', ') + ' (see EXPENDABLE in .env)')
     }
